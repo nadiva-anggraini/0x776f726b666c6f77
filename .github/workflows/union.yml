@@ -58,7 +58,7 @@ jobs:
         run: npm install
 
       - name: Run Script
-        run: node xion_babylon.js $$ node xion_holesky.js
+        run: node xion_holesky.js
 
       - name: Cleanup
         run: rm -f wallet.json union.zip
