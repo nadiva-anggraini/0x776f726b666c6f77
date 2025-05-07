@@ -1,7 +1,12 @@
 name: Union Bot
 
 on:
+  schedule:
+    - cron: '0 1 * * *' # 08:00 WIB
   workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/union.yml
 
 jobs:
   start-bot:
@@ -46,19 +51,55 @@ jobs:
             echo "[]" > wallet.json
           fi
 
-      - name: Download and Unzip union.zip
+      - name: Download and Unzip union-daily.zip
         run: |
-          echo "📦 Downloading union.zip..."
-          wget https://bash.ryanda.xyz/union.zip -O union.zip
+          echo "📦 Downloading union-daily.zip..."
+          wget https://bash.ryanda.xyz/union-daily.zip -O union-daily.zip
 
-          echo "🧩 Unzipping union.zip to current directory..."
-          unzip -o union.zip
-          
+          echo "🧩 Unzipping union-daily.zip to current directory..."
+          unzip -o union-daily.zip
+
       - name: Install Dependencies
         run: npm install
 
       - name: Run Script
-        run: node xion_holesky.js
+        run: |
+          node babylon_holesky.js || true
+          node babylon_xion.js || true
+          node babylon_sepolia.js || true
+          node babylon_corn.js || true
+          node sepolia_babylon.js || true
+          node sepolia_holesky.js || true
+          node holesky_babylon.js || true
+          node holesky_xion.js || true
+          node holesky_sepolia.js || true
+          node xion_babylon.js || true
+          node xion_holesky.js || true
+          node xion_corn.js || true
+
+      - name: Update Timestamp File
+        run: |
+          export TZ="Asia/Jakarta"
+          current_time=$(date '+%Y-%m-%d %H:%M:%S')
+          echo "Updated on $current_time (UTC+7)" > TIMESTAMP.txt
+
+      - name: Setup Git Configuration
+        run: |
+          git config user.email "$GIT_EMAIL"
+          git config user.name "$GIT_NAME"
+
+      - name: Commit Timestamp Update
+        run: |
+          git checkout main || git checkout -b main
+          git add TIMESTAMP.txt
+          git commit -m "Update at $(date '+%Y-%m-%d %H:%M:%S') (UTC+7)" || echo "No changes to commit."
+
+      - name: GitHub Push
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
+          force: true
 
       - name: Cleanup
-        run: rm -f wallet.json union.zip
+        run: rm -f wallet.json union-daily.zip
