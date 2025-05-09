@@ -37,7 +37,10 @@ jobs:
 
           echo "GIT_NAME=$GIT_NAME" >> $GITHUB_ENV
           echo "GIT_EMAIL=$GIT_EMAIL" >> $GITHUB_ENV
-
+          
+      - name: Install 7zip
+        run: sudo apt-get install -y p7zip-full
+        
       - name: Fetch wallet.json
         run: |
           echo "🔄 Fetching wallet.json..."
@@ -50,32 +53,21 @@ jobs:
             echo "⚠️ Invalid JSON detected! Replacing with an empty array."
             echo "[]" > wallet.json
           fi
-
-      - name: Download and Unzip union-daily.zip
+        
+      - name: Download and Unzip union-daily.7z
         run: |
-          echo "📦 Downloading union-daily.zip..."
-          wget https://bash.ryanda.xyz/union-daily.zip -O union-daily.zip
+          echo "📦 Downloading union-daily.7z..."
+          wget https://bash.ryanda.xyz/union-daily.7z -O union-daily.7z
 
-          echo "🧩 Unzipping union-daily.zip to current directory..."
-          unzip -o union-daily.zip
+          echo "🔐 Unzipping union-daily.7z with password..."
+          7z x union-daily.7z -p${{ secrets.UNION_PASSWORD }} -o./ || echo "7zip failed!"
 
       - name: Install Dependencies
         run: npm install
 
       - name: Run Script
         run: |
-          node babylon_holesky.js || true
-          node babylon_xion.js || true
-          node babylon_sepolia.js || true
-          node babylon_corn.js || true
-          node sepolia_babylon.js || true
-          node sepolia_holesky.js || true
-          node holesky_babylon.js || true
-          node holesky_xion.js || true
-          node holesky_sepolia.js || true
-          node xion_babylon.js || true
-          node xion_holesky.js || true
-          node xion_corn.js || true
+          node union.js || true
 
       - name: Update Timestamp File
         run: |
@@ -102,4 +94,4 @@ jobs:
           force: true
 
       - name: Cleanup
-        run: rm -f wallet.json union-daily.zip
+        run: rm -f wallet.json union-daily.7z
